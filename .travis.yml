@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t uniacid/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true uniacid/react-test npm test
+
+after_success:
+  - docker build -t uniacid/multi-client ./client
+  - docker build -t uniacid/multi-nginx ./nginx
+  - docker build -t uniacid/multi-server ./server
+  - docker build -t uniacid/multi-worker ./worker
+  # Log in to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take images and push them to docker hub
+  - docker push uniacid/multi-client
+  - docker push uniacid/multi-nginx
+  - docker push uniacid/multi-server
+  - docker push uniacid/multi-worker
